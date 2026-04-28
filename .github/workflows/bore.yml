@@ -1,0 +1,41 @@
+name: Temporary Backend with Bore
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code (if needed)
+        uses: actions/checkout@v4
+
+      - name: Install bore-cli
+        run: |
+          # Download prebuilt binary from ekzhang/bore releases
+          curl -L https://github.com/ekzhang/bore/releases/latest/download/bore-linux-amd64 \
+            -o bore
+          chmod +x bore
+
+      - name: Start your backend server
+        run: |
+          # Simple Python HTTP server example
+          python3 -m http.server 3000 &
+          sleep 1
+
+      - name: Expose with bore and keep alive for 10 minutes
+        run: |
+          # Use default public server (bore.pub), expose port 3000
+          ./bore local 3000 --to bore.pub &
+          BORE_PID=$!
+
+          # Give it a moment to connect and print the address
+          sleep 5
+          echo "Your backend is now reachable at the address shown above (likely bore.pub:XXXXX)."
+          echo "Keep this job alive for 10 minutes..."
+          sleep 600
+
+          kill $BORE_PID
